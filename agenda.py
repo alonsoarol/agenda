@@ -1,13 +1,20 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem
+# from PyQt5.QtWidgets import *
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
 from PyQt5 import uic
 import sqlite3 as sql
 from re import split
+
+from PyQt5.uic.uiparser import QtCore
 
 
 class MiVentana(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi("agenda.ui", self)
+        self.telefono.setValidator(QtGui.QIntValidator())
+        self.altura.setValidator(QtGui.QIntValidator())
+        self.peso.setValidator(QtGui.QIntValidator())
         self.key = ''
         self.cargaLista()
 
@@ -24,19 +31,31 @@ class MiVentana(QMainWindow):
         self.bAceptar.clicked.connect(self.accept)
         self.bEliminar.clicked.connect(self.delete)
         self.bCancelar.clicked.connect(self.cancel)
+        self.bSalir.clicked.connect(self.exit)
 
+    def exit(self):
+        self.win.close()
         
 
     def delete(self):
-        item = self.lista.currentItem().text()
-        id = split('\D+', item)
-        conn = sql.connect('agenda.db')
-        cursor = conn.cursor()
-        instruccion = f'DELETE FROM contactos WHERE id = {id[0]}'
-        carga = cursor.execute(instruccion)
-        conn.commit()
-        conn.close()
-        self.cargaLista()
+        msg = QMessageBox()
+        msg.setText('Esta seguro de eliminar el contacto seleccionado?')
+        msg.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
+        msg.setIcon(QMessageBox.Question)
+        respuesta = msg.exec_()
+        if respuesta == QMessageBox.Yes:
+            item = self.lista.currentItem().text()
+            id = split('\D+', item)
+            conn = sql.connect('agenda.db')
+            cursor = conn.cursor()
+            instruccion = f'DELETE FROM contactos WHERE id = {id[0]}'
+            carga = cursor.execute(instruccion)
+            conn.commit()
+            conn.close()
+            self.cargaLista()
+            self.fieldsClear()
+            self.bEditar.setEnabled(False)
+            self.bEliminar.setEnabled(False)
     
     def accept(self):
         if self.key == 1:
@@ -61,6 +80,8 @@ class MiVentana(QMainWindow):
             self.bNuevo.setEnabled(True)
             self.bAceptar.setEnabled(False)
             self.bCancelar.setEnabled(False)
+            self.bEditar.setEnabled(False)
+            self.bEliminar.setEnabled(False)
 
         elif self.key == 2:
             nombre = self.nombre.text()
@@ -89,6 +110,8 @@ class MiVentana(QMainWindow):
             self.bNuevo.setEnabled(True)
             self.bAceptar.setEnabled(False)
             self.bCancelar.setEnabled(False)
+            self.bEditar.setEnabled(False)
+            self.bEliminar.setEnabled(False)
 
     def cancel(self):
         self.cargaLista()
@@ -104,10 +127,12 @@ class MiVentana(QMainWindow):
 
 
     def new(self):
+        self.bEditar.setEnabled(False)
+        self.bEliminar.setEnabled(False)
         self.bNuevo.setEnabled(False)
         self.bAceptar.setEnabled(True)
         self.bCancelar.setEnabled(True)
-        self.lista.currentItem().setSelected(False)
+        # self.lista.currentItem().setSelected(False)
         self.fieldEnabled()
         self.fieldsClear()
         self.nombre.setFocus()
@@ -156,6 +181,9 @@ class MiVentana(QMainWindow):
         self.peso.setEnabled(False)
 
     def itemChanged(self):
+        self.bNuevo.setEnabled(True)
+        self.bAceptar.setEnabled(False)
+        self.bCancelar.setEnabled(False)
         self.fieldDisabled()
         self.bEditar.setEnabled(True)
         self.bEliminar.setEnabled(True)
