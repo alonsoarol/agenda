@@ -1,22 +1,22 @@
-# from PyQt5.QtWidgets import *
-from PyQt5 import QtGui
+from PyQt5.QtWidgets import *
+from PyQt5 import *
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
 from PyQt5 import uic
 import sqlite3 as sql
 from re import split
 
-from PyQt5.uic.uiparser import QtCore
 
 
 class MiVentana(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi("agenda.ui", self)
+        self.labelContacto.clear()
         self.telefono.setValidator(QtGui.QIntValidator())
         self.altura.setValidator(QtGui.QIntValidator())
         self.peso.setValidator(QtGui.QIntValidator())
         self.key = ''
-        self.cargaLista()
+        self.loadList()
 
         self.bEliminar.setEnabled(False)
         self.bEditar.setEnabled(False)
@@ -33,8 +33,41 @@ class MiVentana(QMainWindow):
         self.bCancelar.clicked.connect(self.cancel)
         self.bSalir.clicked.connect(self.exit)
 
+    def check(self):
+        item = self.lista.currentItem().text()
+        id = split('\D+', item)
+        nombre = self.nombre.text()
+        apelllido = self.apellido.text()
+        email = self.email.text()
+        tel = self.telefono.text()
+        dir = self.direccion.text()
+        fecha = self.fechanac.text()
+        altura = self.altura.text()
+        peso = self.peso.text()
+        lista1 = [id[0], nombre, apelllido, email, tel, dir, fecha, altura, peso]
+        conn = sql.connect('agenda.db')
+        cursor = conn.cursor()
+        instruccion = f'SELECT * FROM contactos WHERE id = {id[0]}'
+        carga = cursor.execute(instruccion)
+        lista2 = []
+        for fila in carga:
+            lista2.append(str(fila[0]))
+            lista2.append(str(fila[1]))
+            lista2.append(str(fila[2]))
+            lista2.append(str(fila[3]))
+            lista2.append(str(fila[4]))
+            lista2.append(str(fila[5]))
+            lista2.append(str(fila[6]))
+            lista2.append(str(fila[7]))
+            lista2.append(str(fila[8]))
+        if lista1 == lista2:
+            return True
+        else:
+            return False
+
     def exit(self):
-        self.win.close()
+        # self.lista.currentItem().setSelected(False)
+        win.close()
         
 
     def delete(self):
@@ -44,6 +77,7 @@ class MiVentana(QMainWindow):
         msg.setIcon(QMessageBox.Question)
         respuesta = msg.exec_()
         if respuesta == QMessageBox.Yes:
+            self.labelContacto.clear()
             item = self.lista.currentItem().text()
             id = split('\D+', item)
             conn = sql.connect('agenda.db')
@@ -52,69 +86,83 @@ class MiVentana(QMainWindow):
             carga = cursor.execute(instruccion)
             conn.commit()
             conn.close()
-            self.cargaLista()
+            self.loadList()
             self.fieldsClear()
             self.bEditar.setEnabled(False)
             self.bEliminar.setEnabled(False)
     
     def accept(self):
-        if self.key == 1:
-            nombre = self.nombre.text()
-            apelllido = self.apellido.text()
-            email = self.email.text()
-            tel = self.telefono.text()
-            dir = self.direccion.text()
-            fecha = self.fechanac.text()
-            altura = self.altura.text()
-            peso = self.peso.text()
-
-            conn = sql.connect('agenda.db')
-            cursor = conn.cursor()
-            instruccion = f"INSERT INTO contactos VALUES(NULL, '{nombre}', '{apelllido}', '{email}', {tel}, '{dir}', '{fecha}', {altura}, {peso})"
-            cursor.execute(instruccion)
-            conn.commit()
-            conn.close()
-            self.cargaLista()
-            self.fieldsClear()
-            self.fieldDisabled()
-            self.bNuevo.setEnabled(True)
-            self.bAceptar.setEnabled(False)
-            self.bCancelar.setEnabled(False)
-            self.bEditar.setEnabled(False)
-            self.bEliminar.setEnabled(False)
+        nombre = self.nombre.text()
+        apellido = self.apellido.text()
+        email = self.email.text()
+        tel = self.telefono.text()
+        dir = self.direccion.text()
+        fecha = self.fechanac.text()
+        altura = self.altura.text()
+        peso = self.peso.text()
+        if nombre =='' or apellido =='' or email =='' or tel=='' or dir=='' or fecha=='' or altura=='' or peso=='':
+                msg = QMessageBox()
+                msg.setText('Debe completar todos los campos')
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.setIcon(QMessageBox.Information)
+                msg.exec_()
+        
+        elif self.key == 1:
+            msg = QMessageBox()
+            msg.setText('Desea ingresar el nuevo registro?')
+            msg.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
+            msg.setIcon(QMessageBox.Question)
+            respuesta = msg.exec_()
+            if respuesta == QMessageBox.Yes: 
+                self.labelContacto.clear()
+                conn = sql.connect('agenda.db')
+                cursor = conn.cursor()
+                instruccion = f"INSERT INTO contactos VALUES(NULL, '{nombre}', '{apellido}', '{email}', {tel}, '{dir}', '{fecha}', {altura}, {peso})"
+                cursor.execute(instruccion)
+                conn.commit()
+                conn.close()
+                self.loadList()
+                self.fieldsClear()
+                self.fieldDisabled()
+                self.bNuevo.setEnabled(True)
+                self.bAceptar.setEnabled(False)
+                self.bCancelar.setEnabled(False)
+                self.bEditar.setEnabled(False)
+                self.bEliminar.setEnabled(False)
 
         elif self.key == 2:
-            nombre = self.nombre.text()
-            apelllido = self.apellido.text()
-            email = self.email.text()
-            tel = self.telefono.text()
-            dir = self.direccion.text()
-            fecha = self.fechanac.text()
-            altura = self.altura.text()
-            peso = self.peso.text()
+            flag = self.check()
+            if flag == False:
+                msg = QMessageBox()
+                msg.setText('Desea guardar los cambios?')
+                msg.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
+                msg.setIcon(QMessageBox.Question)
+                respuesta = msg.exec_()
+                if respuesta == QMessageBox.Yes:
+                    self.labelContacto.clear()
+                    item = self.lista.currentItem().text()
+                    id = split('\D+', item)
+                    conn = sql.connect('agenda.db')
+                    cursor = conn.cursor()
+                    instruccion = f"""UPDATE contactos SET nombre ='{nombre}', apellido ='{apellido}', 
+                    email ='{email}', telefono ={tel}, direccion ='{dir}', fecha_nacimiento ='{fecha}', 
+                    altura ={altura}, peso ={peso} WHERE id ='{id[0]}'"""
 
-            item = self.lista.currentItem().text()
-            id = split('\D+', item)
-            conn = sql.connect('agenda.db')
-            cursor = conn.cursor()
-            instruccion = f"""UPDATE contactos SET nombre ='{nombre}', apellido ='{apelllido}', 
-            email ='{email}', telefono ={tel}, direccion ='{dir}', fecha_nacimiento ='{fecha}', 
-            altura ={altura}, peso ={peso} WHERE id ='{id[0]}'"""
-
-            cursor.execute(instruccion)
-            conn.commit()
-            conn.close()
-            self.cargaLista()
-            self.fieldsClear()
-            self.fieldDisabled()
-            self.bNuevo.setEnabled(True)
-            self.bAceptar.setEnabled(False)
-            self.bCancelar.setEnabled(False)
-            self.bEditar.setEnabled(False)
-            self.bEliminar.setEnabled(False)
+                    cursor.execute(instruccion)
+                    conn.commit()
+                    conn.close()
+                    self.loadList()
+                    self.fieldsClear()
+                    self.fieldDisabled()
+                    self.bNuevo.setEnabled(True)
+                    self.bAceptar.setEnabled(False)
+                    self.bCancelar.setEnabled(False)
+                    self.bEditar.setEnabled(False)
+                    self.bEliminar.setEnabled(False)
 
     def cancel(self):
-        self.cargaLista()
+        self.labelContacto.clear()
+        self.loadList()
         self.fieldsClear()
         self.fieldDisabled()
         self.bNuevo.setEnabled(True)
@@ -127,6 +175,7 @@ class MiVentana(QMainWindow):
 
 
     def new(self):
+        self.labelContacto.clear()
         self.bEditar.setEnabled(False)
         self.bEliminar.setEnabled(False)
         self.bNuevo.setEnabled(False)
@@ -180,6 +229,7 @@ class MiVentana(QMainWindow):
         self.peso.setEnabled(False)
 
     def itemChanged(self):
+        self.labelContacto.setText(self.lista.currentItem().text())
         self.bNuevo.setEnabled(True)
         self.bAceptar.setEnabled(False)
         self.bCancelar.setEnabled(False)
@@ -204,7 +254,7 @@ class MiVentana(QMainWindow):
         conn.commit()
         conn.close() 
 
-    def cargaLista(self):
+    def loadList(self):
         self.lista.clear()
         conn = sql.connect('agenda.db')
         cursor = conn.cursor()
