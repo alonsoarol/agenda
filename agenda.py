@@ -132,7 +132,6 @@ class MiVentana(QMainWindow):
         self.bNuevo.setEnabled(False)
         self.bAceptar.setEnabled(True)
         self.bCancelar.setEnabled(True)
-        # self.lista.currentItem().setSelected(False)
         self.fieldEnabled()
         self.fieldsClear()
         self.nombre.setFocus()
