@@ -161,15 +161,27 @@ class MiVentana(QMainWindow):
                     self.bEliminar.setEnabled(False)
 
     def cancel(self):
-        self.labelContacto.clear()
-        self.loadList()
-        self.fieldsClear()
-        self.fieldDisabled()
-        self.bNuevo.setEnabled(True)
-        self.bAceptar.setEnabled(False)
-        self.bCancelar.setEnabled(False)
-        self.bEditar.setEnabled(False)
-        self.bEliminar.setEnabled(False)
+        try:
+            self.lista.currentItem().setSelected(False)
+            self.labelContacto.clear()
+            self.loadList()
+            self.fieldsClear()
+            self.fieldDisabled()
+            self.bNuevo.setEnabled(True)
+            self.bAceptar.setEnabled(False)
+            self.bCancelar.setEnabled(False)
+            self.bEditar.setEnabled(False)
+            self.bEliminar.setEnabled(False)
+        except:
+            self.labelContacto.clear()
+            self.loadList()
+            self.fieldsClear()
+            self.fieldDisabled()
+            self.bNuevo.setEnabled(True)
+            self.bAceptar.setEnabled(False)
+            self.bCancelar.setEnabled(False)
+            self.bEditar.setEnabled(False)
+            self.bEliminar.setEnabled(False)
 
 
 
